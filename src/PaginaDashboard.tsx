@@ -1,10 +1,15 @@
 import { useState } from "react";
-import { MetricCard } from "./MetricCard";
-import { StatusBadge } from "./StatusBadge";
-import type { Metrica } from "../types";
+import { MetricCard } from "./components/MetricCard";
+import { StatusBadge } from "./components/StatusBadge";
+import type { Metrica } from "./types";
 
-export function PaginaDashboard() {
+interface PaginaDashboardProps {
+  onIrAPacientes: () => void;
+}
+
+export function PaginaDashboard({ onIrAPacientes }: PaginaDashboardProps) {
   const [pacientes, setPacientes] = useState(128);
+
   const [citasHoy] = useState<Metrica>({
     id: "citas-hoy",
     titulo: "Citas Hoy",
@@ -56,14 +61,16 @@ export function PaginaDashboard() {
       <div className="mx-auto max-w-7xl">
         <header className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">
+            <h1 className="text-3xl font-bold text-black">
               Clínica Salud Integral
             </h1>
 
-            <p className="mt-1 text-slate-500">Dashboard principal</p>
+            <p className="mt-1 text-base font-medium text-black">
+              Dashboard principal
+            </p>
           </div>
 
-          <StatusBadge activo={!mantenimiento} />
+          <StatusBadge estado={mantenimiento ? "inactivo" : "activo"} />
         </header>
 
         {mantenimiento && (
@@ -73,14 +80,17 @@ export function PaginaDashboard() {
         )}
 
         <div className="mb-6 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          <MetricCard metrica={metricaPacientes} />
+          <MetricCard metrica={metricaPacientes} onClick={onIrAPacientes} />
+
           <MetricCard metrica={citasHoy} />
+
           <MetricCard metrica={consultasPendientes} />
+
           <MetricCard metrica={disponibilidad} />
         </div>
 
         <div className="rounded-xl bg-white p-6 shadow-md">
-          <h2 className="mb-4 text-lg font-semibold text-slate-900">
+          <h2 className="mb-4 text-lg font-bold text-black">
             Controles del Dashboard
           </h2>
 
