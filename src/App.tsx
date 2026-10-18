@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { PaginaDashboard } from "./PaginaDashboard";
 import { PaginaPacientes } from "./PaginaPacientes";
+import FormularioCita from "./FormularioCita";
 
 function App() {
-  const [pagina, setPagina] = useState<"dashboard" | "pacientes">("dashboard");
+  const [pagina, setPagina] = useState<"dashboard" | "pacientes" | "citas">(
+    "dashboard",
+  );
 
   return (
     <div className="min-h-screen bg-slate-100">
@@ -35,6 +38,17 @@ function App() {
             >
               Pacientes
             </button>
+
+            <button
+              onClick={() => setPagina("citas")}
+              className={`rounded-lg px-4 py-2 font-medium ${
+                pagina === "citas"
+                  ? "bg-sky-600 text-white"
+                  : "text-slate-800 hover:bg-slate-100"
+              }`}
+            >
+              Nueva cita
+            </button>
           </div>
         </div>
       </nav>
@@ -44,6 +58,12 @@ function App() {
       )}
 
       {pagina === "pacientes" && <PaginaPacientes />}
+
+      {pagina === "citas" && (
+        <div className="px-6 py-8">
+          <FormularioCita />
+        </div>
+      )}
     </div>
   );
 }
