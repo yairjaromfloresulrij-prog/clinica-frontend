@@ -1,13 +1,11 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { MetricCard } from "./components/MetricCard";
 import { StatusBadge } from "./components/StatusBadge";
 import type { Metrica } from "./types";
 
-interface PaginaDashboardProps {
-  onIrAPacientes: () => void;
-}
-
-export function PaginaDashboard({ onIrAPacientes }: PaginaDashboardProps) {
+export function PaginaDashboard() {
+  const navigate = useNavigate();
   const [pacientes, setPacientes] = useState(128);
 
   const [citasHoy] = useState<Metrica>({
@@ -80,7 +78,10 @@ export function PaginaDashboard({ onIrAPacientes }: PaginaDashboardProps) {
         )}
 
         <div className="mb-6 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          <MetricCard metrica={metricaPacientes} onClick={onIrAPacientes} />
+          <MetricCard
+            metrica={metricaPacientes}
+            onClick={() => navigate("/pacientes")}
+          />
 
           <MetricCard metrica={citasHoy} />
 

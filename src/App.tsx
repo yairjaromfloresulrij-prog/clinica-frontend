@@ -1,70 +1,27 @@
-import { useState } from "react";
+import { Routes, Route } from "react-router-dom";
+
+import { Layout } from "./layouts/Layout";
 import { PaginaDashboard } from "./PaginaDashboard";
 import { PaginaPacientes } from "./PaginaPacientes";
+import { PaginaDetallePaciente } from "./PaginaDetallePaciente";
+import { PaginaNotFound } from "./PaginaNotFound";
 import FormularioCita from "./FormularioCita";
 
 function App() {
-  const [pagina, setPagina] = useState<"dashboard" | "pacientes" | "citas">(
-    "dashboard",
-  );
-
   return (
-    <div className="min-h-screen bg-slate-100">
-      <nav className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <h1 className="text-xl font-bold text-slate-900">
-            Clínica Salud Integral
-          </h1>
+    <Routes>
+      <Route element={<Layout />}>
+        <Route path="/" element={<PaginaDashboard />} />
 
-          <div className="flex gap-2">
-            <button
-              onClick={() => setPagina("dashboard")}
-              className={`rounded-lg px-4 py-2 font-medium ${
-                pagina === "dashboard"
-                  ? "bg-sky-600 text-white"
-                  : "text-slate-800 hover:bg-slate-100"
-              }`}
-            >
-              Dashboard
-            </button>
+        <Route path="/pacientes" element={<PaginaPacientes />} />
 
-            <button
-              onClick={() => setPagina("pacientes")}
-              className={`rounded-lg px-4 py-2 font-medium ${
-                pagina === "pacientes"
-                  ? "bg-sky-600 text-white"
-                  : "text-slate-800 hover:bg-slate-100"
-              }`}
-            >
-              Pacientes
-            </button>
+        <Route path="/pacientes/:id" element={<PaginaDetallePaciente />} />
 
-            <button
-              onClick={() => setPagina("citas")}
-              className={`rounded-lg px-4 py-2 font-medium ${
-                pagina === "citas"
-                  ? "bg-sky-600 text-white"
-                  : "text-slate-800 hover:bg-slate-100"
-              }`}
-            >
-              Nueva cita
-            </button>
-          </div>
-        </div>
-      </nav>
+        <Route path="/citas/nueva" element={<FormularioCita />} />
 
-      {pagina === "dashboard" && (
-        <PaginaDashboard onIrAPacientes={() => setPagina("pacientes")} />
-      )}
-
-      {pagina === "pacientes" && <PaginaPacientes />}
-
-      {pagina === "citas" && (
-        <div className="px-6 py-8">
-          <FormularioCita />
-        </div>
-      )}
-    </div>
+        <Route path="*" element={<PaginaNotFound />} />
+      </Route>
+    </Routes>
   );
 }
 
