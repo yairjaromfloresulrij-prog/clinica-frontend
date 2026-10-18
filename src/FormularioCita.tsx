@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-
+import { useNavigate } from "react-router-dom";
 import { citaSchema, type CitaFormData } from "./schemas/citaSchema";
 import { useMedicos } from "./hooks/useMedicos";
 
 export default function FormularioCita() {
   const { medicos, cargando } = useMedicos();
+  const navigate = useNavigate();
 
   const [citaConfirmada, setCitaConfirmada] = useState<CitaFormData | null>(
     null,
@@ -262,13 +263,23 @@ export default function FormularioCita() {
         )}
       </div>
 
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className="w-full rounded-md bg-blue-600 px-4 py-3 font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        {isSubmitting ? "Agendando..." : "Agendar cita"}
-      </button>
+      <div className="flex gap-3">
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="rounded-md bg-slate-200 px-4 py-3 font-medium text-slate-800 hover:bg-slate-300"
+        >
+          Cancelar
+        </button>
+
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="flex-1 rounded-md bg-blue-600 px-4 py-3 font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {isSubmitting ? "Agendando..." : "Agendar cita"}
+        </button>
+      </div>
     </form>
   );
 }
