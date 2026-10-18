@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import type { EstadoPaciente, Paciente } from "../types/paciente";
 import { StatusBadge } from "./StatusBadge";
 
@@ -36,6 +37,13 @@ export function PacienteRow({
         <div>
           <StatusBadge estado={paciente.estado} />
         </div>
+
+        <Link
+          to={`/pacientes/${paciente.id}`}
+          className="text-sm font-medium text-sky-600 hover:text-sky-800"
+        >
+          Ver detalle →
+        </Link>
 
         <select
           value={paciente.estado}
