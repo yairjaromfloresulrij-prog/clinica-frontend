@@ -1,39 +1,119 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { MetricCard } from "./components/MetricCard";
 import { StatusBadge } from "./components/StatusBadge";
+import { api } from "./lib/axios";
 import type { Metrica } from "./types";
+
+type EstadoCita = "Programada" | "Cancelada" | "Realizada";
+
+type Cita = {
+  estado: EstadoCita;
+};
 
 export function PaginaDashboard() {
   const navigate = useNavigate();
-  const [pacientes, setPacientes] = useState(128);
 
-  const [citasHoy] = useState<Metrica>({
-    id: "citas-hoy",
-    titulo: "Citas Hoy",
-    valor: 24,
-    descripcion: "4 más que ayer",
+  const [pacientes, setPacientes] = useState(0);
+  const [cargandoPacientes, setCargandoPacientes] = useState(true);
+  const [errorPacientes, setErrorPacientes] = useState(false);
+
+  const [medicos, setMedicos] = useState(0);
+  const [cargandoMedicos, setCargandoMedicos] = useState(true);
+  const [errorMedicos, setErrorMedicos] = useState(false);
+
+  const [citasProgramadas, setCitasProgramadas] = useState(0);
+  const [cargandoCitas, setCargandoCitas] = useState(true);
+  const [errorCitas, setErrorCitas] = useState(false);
+
+  const [completadas, setCompletadas] = useState(0);
+
+  useEffect(() => {
+    api
+      .get("/pacientes")
+      .then((res) => {
+        setPacientes(res.data.data.length);
+      })
+      .catch(() => {
+        setErrorPacientes(true);
+      })
+      .finally(() => {
+        setCargandoPacientes(false);
+      });
+  }, []);
+
+  useEffect(() => {
+    api
+      .get("/medicos")
+      .then((res) => {
+        setMedicos(res.data.data.length);
+      })
+      .catch(() => {
+        setErrorMedicos(true);
+      })
+      .finally(() => {
+        setCargandoMedicos(false);
+      });
+  }, []);
+
+  useEffect(() => {
+    api
+      .get("/citas")
+      .then((res) => {
+        const citas: Cita[] = res.data.data;
+
+        const programadas = citas.filter(
+          (cita) => cita.estado === "Programada",
+        );
+
+        const realizadas = citas.filter((cita) => cita.estado === "Realizada");
+
+        setCitasProgramadas(programadas.length);
+        setCompletadas(realizadas.length);
+      })
+      .catch(() => {
+        setErrorCitas(true);
+      })
+      .finally(() => {
+        setCargandoCitas(false);
+      });
+  }, []);
+
+  const metricaPacientes: Metrica = {
+    id: "pacientes",
+    titulo: "Pacientes",
+    valor: cargandoPacientes ? "..." : errorPacientes ? "Error" : pacientes,
+    descripcion: "Pacientes registrados",
+    tendencia: "positiva",
+    icono: "👥",
+  };
+
+  const metricaMedicos: Metrica = {
+    id: "medicos",
+    titulo: "Médicos",
+    valor: cargandoMedicos ? "..." : errorMedicos ? "Error" : medicos,
+    descripcion: "Médicos registrados",
+    tendencia: "positiva",
+    icono: "👨‍⚕️",
+  };
+
+  const metricaCitasProgramadas: Metrica = {
+    id: "citas-programadas",
+    titulo: "Citas Programadas",
+    valor: cargandoCitas ? "..." : errorCitas ? "Error" : citasProgramadas,
+    descripcion: "Citas con estado programado",
     tendencia: "positiva",
     icono: "📅",
-  });
+  };
 
-  const [consultasPendientes] = useState<Metrica>({
-    id: "consultas-pendientes",
-    titulo: "Consultas Pendientes",
-    valor: 8,
-    descripcion: "2 menos que ayer",
+  const metricaCompletadas: Metrica = {
+    id: "completadas",
+    titulo: "Completadas Hoy",
+    valor: cargandoCitas ? "..." : errorCitas ? "Error" : completadas,
+    descripcion: "Citas realizadas",
     tendencia: "positiva",
-    icono: "📋",
-  });
-
-  const [disponibilidad] = useState<Metrica>({
-    id: "disponibilidad",
-    titulo: "Disponibilidad",
-    valor: "92%",
-    descripcion: "Capacidad disponible",
-    tendencia: "neutra",
-    icono: "🏥",
-  });
+    icono: "✅",
+  };
 
   const [mantenimiento, setMantenimiento] = useState(false);
 
@@ -45,58 +125,48 @@ export function PaginaDashboard() {
     setPacientes((prev) => prev - 1);
   };
 
-  const metricaPacientes: Metrica = {
-    id: "pacientes",
-    titulo: "Pacientes",
-    valor: pacientes,
-    descripcion: "Total de pacientes registrados",
-    tendencia: "positiva",
-    icono: "👥",
-  };
-
   return (
-    <main className="min-h-screen bg-slate-100 p-8">
-      <div className="mx-auto max-w-7xl">
-        <header className="mb-8 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-black">
-              Clínica Salud Integral
-            </h1>
+    <main className="min-h-screen bg-slate-100 p-4 sm:p-6 lg:p-8">
+      <div className="mx-auto max-w-6xl">
+        <header className="mb-8">
+          <h1 className="text-3xl font-bold text-slate-900">
+            Dashboard de Clínica
+          </h1>
 
-            <p className="mt-1 text-base font-medium text-black">
-              Dashboard principal
-            </p>
-          </div>
-
-          <StatusBadge estado={mantenimiento ? "inactivo" : "activo"} />
+          <p className="mt-2 text-slate-600">Resumen general de la clínica</p>
         </header>
 
-        {mantenimiento && (
-          <div className="mb-6 rounded-lg bg-rose-100 p-4 text-rose-700">
-            ⚠️ El sistema se encuentra en modo mantenimiento.
-          </div>
-        )}
+        <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <MetricCard metrica={metricaPacientes} />
+          <MetricCard metrica={metricaMedicos} />
+          <MetricCard metrica={metricaCitasProgramadas} />
+          <MetricCard metrica={metricaCompletadas} />
+        </section>
 
-        <div className="mb-6 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          <MetricCard
-            metrica={metricaPacientes}
-            onClick={() => navigate("/pacientes")}
-          />
-
-          <MetricCard metrica={citasHoy} />
-
-          <MetricCard metrica={consultasPendientes} />
-
-          <MetricCard metrica={disponibilidad} />
-        </div>
-
-        <div className="rounded-xl bg-white p-6 shadow-md">
-          <h2 className="mb-4 text-lg font-bold text-black">
-            Controles del Dashboard
+        <section className="mt-8 rounded-xl bg-white p-6 shadow-sm">
+          <h2 className="text-xl font-semibold text-slate-900">
+            Acciones rápidas
           </h2>
 
-          <div className="flex flex-wrap gap-3">
+          <div className="mt-4 flex flex-wrap gap-3">
             <button
+              type="button"
+              onClick={() => navigate("/pacientes")}
+              className="rounded-lg bg-sky-600 px-4 py-2 font-medium text-white hover:bg-sky-700"
+            >
+              Ver pacientes
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setMantenimiento((prev) => !prev)}
+              className="rounded-lg bg-slate-200 px-4 py-2 font-medium text-slate-700 hover:bg-slate-300"
+            >
+              Mantenimiento
+            </button>
+
+            <button
+              type="button"
               onClick={incrementarPacientes}
               className="rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white hover:bg-emerald-700"
             >
@@ -104,22 +174,20 @@ export function PaginaDashboard() {
             </button>
 
             <button
+              type="button"
               onClick={decrementarPacientes}
               className="rounded-lg bg-rose-600 px-4 py-2 font-medium text-white hover:bg-rose-700"
             >
               - Paciente
             </button>
-
-            <button
-              onClick={() => setMantenimiento((prev) => !prev)}
-              className="rounded-lg bg-slate-700 px-4 py-2 font-medium text-white hover:bg-slate-800"
-            >
-              {mantenimiento
-                ? "Desactivar mantenimiento"
-                : "Activar mantenimiento"}
-            </button>
           </div>
-        </div>
+
+          {mantenimiento && (
+            <div className="mt-4">
+              <StatusBadge estado="en_espera" />
+            </div>
+          )}
+        </section>
       </div>
     </main>
   );
