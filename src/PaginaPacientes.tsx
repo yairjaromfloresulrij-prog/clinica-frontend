@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PacienteRow } from "./components/PacienteRow";
 import { BuscadorPacientes } from "./components/BuscadorPacientes";
-import { pacientes as pacientesIniciales } from "./data/patients";
-import type { EstadoPaciente } from "./types/paciente";
+import { api } from "./lib/axios";
+import type { EstadoPaciente, Paciente } from "./types/paciente";
 
 export function PaginaPacientes() {
-  const [pacientes, setPacientes] = useState(pacientesIniciales);
+  const [pacientes, setPacientes] = useState<Paciente[]>([]);
   const [busqueda, setBusqueda] = useState("");
   const [estadoFiltro, setEstadoFiltro] = useState<"Todos" | EstadoPaciente>(
     "Todos",
@@ -15,15 +15,55 @@ export function PaginaPacientes() {
   const [apellido, setApellido] = useState("");
   const [email, setEmail] = useState("");
   const [estado, setEstado] = useState<EstadoPaciente>("activo");
+
   const [error, setError] = useState("");
+  const [cargando, setCargando] = useState(true);
+
+  useEffect(() => {
+    api
+      .get("/pacientes")
+      .then((res) => {
+        const pacientesApi: Paciente[] = res.data.data.map(
+          (paciente: {
+            id_paciente: number;
+            nombre: string;
+            apellido: string;
+            telefono: string;
+            email: string;
+          }) => ({
+            id: paciente.id_paciente.toString(),
+            nombre: paciente.nombre,
+            apellido: paciente.apellido,
+            email: paciente.email,
+            telefono: paciente.telefono,
+            especialidadAsignada: "Sin asignar",
+            ultimaCita: "Sin cita",
+            estado: "activo",
+          }),
+        );
+
+        setPacientes(pacientesApi);
+      })
+      .catch(() => {
+        setError("No se pudieron cargar los pacientes.");
+      })
+      .finally(() => {
+        setCargando(false);
+      });
+  }, []);
 
   const pacientesFiltrados = pacientes.filter((paciente) => {
     const texto = busqueda.toLowerCase();
 
-    return (
-      paciente.nombre.toLowerCase().includes(texto) &&
-      (estadoFiltro === "Todos" || paciente.estado === estadoFiltro)
-    );
+    const coincideTexto =
+      paciente.nombre.toLowerCase().includes(texto) ||
+      paciente.apellido.toLowerCase().includes(texto) ||
+      paciente.email.toLowerCase().includes(texto);
+
+    const coincideEstado =
+      estadoFiltro === "Todos" || paciente.estado === estadoFiltro;
+
+    return coincideTexto && coincideEstado;
   });
 
   const cambiarEstado = (id: string, estado: EstadoPaciente) => {
@@ -45,6 +85,34 @@ export function PaginaPacientes() {
 
     setPacientes((prev) => prev.filter((paciente) => paciente.id !== id));
   };
+
+  if (cargando) {
+    return (
+      <main className="min-h-screen bg-slate-100 p-4 sm:p-6 lg:p-8">
+        <div className="mx-auto max-w-6xl">
+          <p className="text-slate-600">Cargando pacientes...</p>
+        </div>
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main className="min-h-screen bg-slate-100 p-4 sm:p-6 lg:p-8">
+        <div className="mx-auto max-w-6xl">
+          <p className="text-red-600">{error}</p>
+
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="mt-4 rounded-lg bg-sky-600 px-4 py-2 font-medium text-white hover:bg-sky-700"
+          >
+            Reintentar
+          </button>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-slate-100 p-4 sm:p-6 lg:p-8">
@@ -96,7 +164,7 @@ export function PaginaPacientes() {
               return;
             }
 
-            const nuevoPaciente = {
+            const nuevoPaciente: Paciente = {
               id: Date.now().toString(),
               nombre: nombre.trim(),
               apellido: apellido.trim(),
