@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
+
 import { PacienteRow } from "./components/PacienteRow";
 import { BuscadorPacientes } from "./components/BuscadorPacientes";
+import { ModalConfirmacion } from "./components/ModalConfirmacion";
 import { api } from "./lib/axios";
+import { extraerMensajeError } from "./lib/errorHandler";
+import { create, remove } from "./services/pacientes";
 import type { EstadoPaciente, Paciente } from "./types/paciente";
 
 export function PaginaPacientes() {
@@ -14,10 +19,18 @@ export function PaginaPacientes() {
   const [nombre, setNombre] = useState("");
   const [apellido, setApellido] = useState("");
   const [email, setEmail] = useState("");
+  const [telefono, setTelefono] = useState("");
+  const [fechaNacimiento, setFechaNacimiento] = useState("");
   const [estado, setEstado] = useState<EstadoPaciente>("activo");
 
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(true);
+
+  const [pacienteAEliminar, setPacienteAEliminar] = useState<string | null>(
+    null,
+  );
+
+  const [eliminando, setEliminando] = useState(false);
 
   useEffect(() => {
     api
@@ -53,216 +66,258 @@ export function PaginaPacientes() {
   }, []);
 
   const pacientesFiltrados = pacientes.filter((paciente) => {
-    const texto = busqueda.toLowerCase();
+    const textoBusqueda = busqueda.toLowerCase();
 
-    const coincideTexto =
-      paciente.nombre.toLowerCase().includes(texto) ||
-      paciente.apellido.toLowerCase().includes(texto) ||
-      paciente.email.toLowerCase().includes(texto);
+    const coincideBusqueda =
+      paciente.nombre.toLowerCase().includes(textoBusqueda) ||
+      paciente.apellido.toLowerCase().includes(textoBusqueda) ||
+      paciente.email.toLowerCase().includes(textoBusqueda);
 
     const coincideEstado =
       estadoFiltro === "Todos" || paciente.estado === estadoFiltro;
 
-    return coincideTexto && coincideEstado;
+    return coincideBusqueda && coincideEstado;
   });
 
-  const cambiarEstado = (id: string, estado: EstadoPaciente) => {
+  const cambiarEstado = (id: string, nuevoEstado: EstadoPaciente) => {
     setPacientes((prev) =>
       prev.map((paciente) =>
-        paciente.id === id ? { ...paciente, estado } : paciente,
+        paciente.id === id ? { ...paciente, estado: nuevoEstado } : paciente,
       ),
     );
   };
 
   const eliminarPaciente = (id: string) => {
-    const confirmar = window.confirm(
-      "¿Estás seguro de que quieres eliminar este paciente?",
-    );
+    setPacienteAEliminar(id);
+  };
 
-    if (!confirmar) {
+  const confirmarEliminacion = async () => {
+    if (!pacienteAEliminar) {
       return;
     }
 
-    setPacientes((prev) => prev.filter((paciente) => paciente.id !== id));
+    setEliminando(true);
+
+    try {
+      await remove(pacienteAEliminar);
+
+      setPacientes((prev) =>
+        prev.filter((paciente) => paciente.id !== pacienteAEliminar),
+      );
+
+      toast.success("Paciente eliminado");
+
+      setPacienteAEliminar(null);
+    } catch (err: unknown) {
+      const mensaje = extraerMensajeError(err);
+
+      toast.error(mensaje);
+    } finally {
+      setEliminando(false);
+    }
   };
 
-  if (cargando) {
-    return (
-      <main className="min-h-screen bg-slate-100 p-4 sm:p-6 lg:p-8">
-        <div className="mx-auto max-w-6xl">
-          <p className="text-slate-600">Cargando pacientes...</p>
-        </div>
-      </main>
-    );
-  }
-
-  if (error) {
-    return (
-      <main className="min-h-screen bg-slate-100 p-4 sm:p-6 lg:p-8">
-        <div className="mx-auto max-w-6xl">
-          <p className="text-red-600">{error}</p>
-
-          <button
-            type="button"
-            onClick={() => window.location.reload()}
-            className="mt-4 rounded-lg bg-sky-600 px-4 py-2 font-medium text-white hover:bg-sky-700"
-          >
-            Reintentar
-          </button>
-        </div>
-      </main>
-    );
-  }
-
   return (
-    <main className="min-h-screen bg-slate-100 p-4 sm:p-6 lg:p-8">
-      <div className="mx-auto max-w-6xl">
-        <header className="mb-6">
-          <h1 className="text-3xl font-bold text-slate-900">Pacientes</h1>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold">Pacientes</h1>
 
-          <p className="mt-1 text-slate-500">
-            Gestiona y consulta la información de los pacientes
-          </p>
-        </header>
+        <p className="text-gray-600">Gestión de pacientes de la clínica</p>
+      </div>
 
-        <div className="mb-6">
-          <BuscadorPacientes value={busqueda} onChange={setBusqueda} />
-        </div>
+      <BuscadorPacientes value={busqueda} onChange={setBusqueda} />
 
-        <div className="mb-6 flex flex-wrap items-center gap-4">
-          <select
-            value={estadoFiltro}
-            onChange={(event) =>
-              setEstadoFiltro(event.target.value as "Todos" | EstadoPaciente)
-            }
-            className="rounded-lg border border-slate-300 bg-white px-4 py-2"
-          >
-            <option value="Todos">Todos</option>
-            <option value="activo">Activo</option>
-            <option value="inactivo">Inactivo</option>
-            <option value="en_espera">En espera</option>
-          </select>
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={() => setEstadoFiltro("Todos")}
+          className="rounded-lg border px-4 py-2"
+        >
+          Todos
+        </button>
 
-          <button
-            type="button"
-            onClick={() => {
-              setBusqueda("");
-              setEstadoFiltro("Todos");
-            }}
-            className="rounded-lg bg-slate-800 px-4 py-2 text-white hover:bg-slate-700"
-          >
-            Limpiar filtros
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => setEstadoFiltro("activo")}
+          className="rounded-lg border px-4 py-2"
+        >
+          Activos
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setEstadoFiltro("inactivo")}
+          className="rounded-lg border px-4 py-2"
+        >
+          Inactivos
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setEstadoFiltro("en_espera")}
+          className="rounded-lg border px-4 py-2"
+        >
+          En espera
+        </button>
+      </div>
+
+      <div className="rounded-xl border bg-white p-6 shadow-sm">
+        <h2 className="mb-4 text-xl font-semibold">Registrar paciente</h2>
 
         <form
-          onSubmit={(event) => {
+          onSubmit={async (event) => {
             event.preventDefault();
 
-            if (!nombre.trim() || !email.trim()) {
-              setError("Nombre y email son obligatorios");
+            if (
+              !nombre.trim() ||
+              !apellido.trim() ||
+              !telefono.trim() ||
+              !fechaNacimiento
+            ) {
+              setError(
+                "Nombre, apellido, teléfono y fecha de nacimiento son obligatorios",
+              );
               return;
             }
 
-            const nuevoPaciente: Paciente = {
-              id: Date.now().toString(),
-              nombre: nombre.trim(),
-              apellido: apellido.trim(),
-              email: email.trim(),
-              telefono: "Sin teléfono",
-              especialidadAsignada: "Sin asignar",
-              ultimaCita: "Sin cita",
-              estado,
-            };
+            try {
+              const respuesta = await create({
+                nombre: nombre.trim(),
+                apellido: apellido.trim(),
+                telefono: telefono.trim(),
+                email: email.trim() || undefined,
+                fecha_nacimiento: fechaNacimiento,
+              });
 
-            setPacientes((prev) => [...prev, nuevoPaciente]);
+              const pacienteCreado: Paciente = {
+                id: respuesta.data.id,
+                nombre: respuesta.data.nombre,
+                apellido: respuesta.data.apellido,
+                email: respuesta.data.email,
+                telefono: respuesta.data.telefono,
+                especialidadAsignada: "Sin asignar",
+                ultimaCita: "Sin cita",
+                estado,
+              };
 
-            setNombre("");
-            setApellido("");
-            setEmail("");
-            setEstado("activo");
-            setError("");
+              setPacientes((prev) => [...prev, pacienteCreado]);
+
+              setNombre("");
+              setApellido("");
+              setEmail("");
+              setTelefono("");
+              setFechaNacimiento("");
+              setEstado("activo");
+              setError("");
+
+              toast.success("Paciente registrado");
+            } catch (err: unknown) {
+              const mensaje = extraerMensajeError(err);
+
+              setError(mensaje);
+              toast.error(mensaje);
+            }
           }}
-          className="mb-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
+          className="grid gap-4 md:grid-cols-2"
         >
-          <h2 className="mb-4 text-xl font-semibold text-slate-800">
-            Agregar paciente
-          </h2>
+          <div>
+            <label className="mb-1 block text-sm font-medium">Nombre</label>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">
-                Nombre
-              </label>
-
-              <input
-                type="text"
-                value={nombre}
-                onChange={(event) => setNombre(event.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-4 py-2"
-              />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">
-                Apellido
-              </label>
-
-              <input
-                type="text"
-                value={apellido}
-                onChange={(event) => setApellido(event.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-4 py-2"
-              />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">
-                Email
-              </label>
-
-              <input
-                type="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-4 py-2"
-              />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">
-                Estado
-              </label>
-
-              <select
-                value={estado}
-                onChange={(event) =>
-                  setEstado(event.target.value as EstadoPaciente)
-                }
-                className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2"
-              >
-                <option value="activo">Activo</option>
-                <option value="inactivo">Inactivo</option>
-                <option value="en_espera">En espera</option>
-              </select>
-            </div>
+            <input
+              type="text"
+              value={nombre}
+              onChange={(event) => setNombre(event.target.value)}
+              className="w-full rounded-lg border px-3 py-2"
+              placeholder="Nombre"
+            />
           </div>
 
-          {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+          <div>
+            <label className="mb-1 block text-sm font-medium">Apellido</label>
 
-          <button
-            type="submit"
-            className="mt-4 rounded-lg bg-sky-600 px-4 py-2 font-medium text-white hover:bg-sky-700"
-          >
-            Agregar paciente
-          </button>
+            <input
+              type="text"
+              value={apellido}
+              onChange={(event) => setApellido(event.target.value)}
+              className="w-full rounded-lg border px-3 py-2"
+              placeholder="Apellido"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium">Teléfono</label>
+
+            <input
+              type="text"
+              value={telefono}
+              onChange={(event) => setTelefono(event.target.value)}
+              className="w-full rounded-lg border px-3 py-2"
+              placeholder="Teléfono"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium">Email</label>
+
+            <input
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              className="w-full rounded-lg border px-3 py-2"
+              placeholder="correo@ejemplo.com"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium">
+              Fecha de nacimiento
+            </label>
+
+            <input
+              type="date"
+              value={fechaNacimiento}
+              onChange={(event) => setFechaNacimiento(event.target.value)}
+              className="w-full rounded-lg border px-3 py-2"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium">Estado</label>
+
+            <select
+              value={estado}
+              onChange={(event) =>
+                setEstado(event.target.value as EstadoPaciente)
+              }
+              className="w-full rounded-lg border px-3 py-2"
+            >
+              <option value="activo">Activo</option>
+              <option value="inactivo">Inactivo</option>
+              <option value="en_espera">En espera</option>
+            </select>
+          </div>
+
+          {error && (
+            <p className="md:col-span-2 text-sm text-red-600">{error}</p>
+          )}
+
+          <div className="md:col-span-2">
+            <button
+              type="submit"
+              className="rounded-lg bg-blue-600 px-5 py-2 text-white hover:bg-blue-700"
+            >
+              Registrar paciente
+            </button>
+          </div>
         </form>
+      </div>
 
-        <p className="mb-4 text-sm text-slate-500">
-          {pacientesFiltrados.length} paciente(s) encontrado(s)
-        </p>
-
-        <div className="flex flex-col gap-4 md:grid md:grid-cols-2 lg:grid-cols-3">
+      {cargando ? (
+        <p>Cargando pacientes...</p>
+      ) : pacientesFiltrados.length === 0 ? (
+        <p>No hay pacientes que coincidan con la búsqueda.</p>
+      ) : (
+        <div className="space-y-3">
           {pacientesFiltrados.map((paciente) => (
             <PacienteRow
               key={paciente.id}
@@ -272,13 +327,22 @@ export function PaginaPacientes() {
             />
           ))}
         </div>
+      )}
 
-        {pacientesFiltrados.length === 0 && (
-          <div className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center">
-            <p className="text-slate-500">No se encontraron pacientes.</p>
-          </div>
-        )}
-      </div>
-    </main>
+      <ModalConfirmacion
+        abierto={pacienteAEliminar !== null}
+        titulo="Eliminar paciente"
+        mensaje="¿Estás seguro de que quieres eliminar este paciente? Esta acción no se puede deshacer."
+        textoConfirmar="Eliminar"
+        textoCancelar="Cancelar"
+        cargando={eliminando}
+        onConfirmar={confirmarEliminacion}
+        onCancelar={() => {
+          if (!eliminando) {
+            setPacienteAEliminar(null);
+          }
+        }}
+      />
+    </div>
   );
 }

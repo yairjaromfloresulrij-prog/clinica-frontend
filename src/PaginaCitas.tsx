@@ -1,0 +1,133 @@
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
+
+import { api } from "./lib/axios";
+import { extraerMensajeError } from "./lib/errorHandler";
+import { updateEstado } from "./services/citas";
+import type { EstadoCita } from "./services/citas";
+
+interface Cita {
+  id_cita: number;
+  id_paciente: number;
+  id_medico: number;
+  fecha_hora: string;
+  estado: EstadoCita;
+}
+
+export function PaginaCitas() {
+  const [citas, setCitas] = useState<Cita[]>([]);
+  const [cargando, setCargando] = useState(true);
+
+  useEffect(() => {
+    api
+      .get("/citas")
+      .then((respuesta) => {
+        setCitas(respuesta.data.data);
+      })
+      .catch((err: unknown) => {
+        toast.error(extraerMensajeError(err));
+      })
+      .finally(() => {
+        setCargando(false);
+      });
+  }, []);
+
+  const cambiarEstado = async (id: number, nuevoEstado: EstadoCita) => {
+    const citasAnteriores = citas;
+
+    setCitas((prev) =>
+      prev.map((cita) =>
+        cita.id_cita === id ? { ...cita, estado: nuevoEstado } : cita,
+      ),
+    );
+
+    try {
+      await updateEstado(String(id), nuevoEstado);
+
+      toast.success("Estado actualizado");
+    } catch (err: unknown) {
+      setCitas(citasAnteriores);
+
+      toast.error("Cambio revertido");
+
+      const mensaje = extraerMensajeError(err);
+
+      if (mensaje) {
+        toast.error(mensaje);
+      }
+    }
+  };
+
+  if (cargando) {
+    return (
+      <main className="min-h-screen bg-slate-100 p-8">
+        <p className="text-slate-600">Cargando citas...</p>
+      </main>
+    );
+  }
+
+  return (
+    <main className="min-h-screen bg-slate-100 p-4 sm:p-6 lg:p-8">
+      <div className="mx-auto max-w-6xl">
+        <header className="mb-8">
+          <h1 className="text-3xl font-bold text-slate-900">Citas</h1>
+
+          <p className="mt-2 text-slate-600">Gestión de estados de las citas</p>
+        </header>
+
+        <section className="space-y-4">
+          {citas.map((cita) => (
+            <article
+              key={cita.id_cita}
+              className="rounded-xl bg-white p-6 shadow-sm"
+            >
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="font-semibold text-slate-900">
+                    Cita #{cita.id_cita}
+                  </p>
+
+                  <p className="text-sm text-slate-600">
+                    Paciente: {cita.id_paciente}
+                  </p>
+
+                  <p className="text-sm text-slate-600">
+                    Médico: {cita.id_medico}
+                  </p>
+
+                  <p className="text-sm text-slate-600">
+                    {new Date(cita.fecha_hora).toLocaleString()}
+                  </p>
+
+                  <p className="mt-2 text-sm font-medium text-slate-700">
+                    Estado: {cita.estado}
+                  </p>
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => cambiarEstado(cita.id_cita, "Completada")}
+                    disabled={cita.estado === "Completada"}
+                    className="rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Completar
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => cambiarEstado(cita.id_cita, "Cancelada")}
+                    disabled={cita.estado === "Cancelada"}
+                    className="rounded-lg bg-rose-600 px-4 py-2 font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            </article>
+          ))}
+        </section>
+      </div>
+    </main>
+  );
+}
