@@ -1,64 +1,35 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import toast from "react-hot-toast";
 
-import { api } from "./lib/axios";
 import { extraerMensajeError } from "./lib/errorHandler";
-import { updateEstado } from "./services/citas";
+import { useCitasStore } from "./stores/citasStore";
 import type { EstadoCita } from "./services/citas";
 
-interface Cita {
-  id_cita: number;
-  id_paciente: number;
-  id_medico: number;
-  fecha_hora: string;
-  estado: EstadoCita;
-}
-
 export function PaginaCitas() {
-  const [citas, setCitas] = useState<Cita[]>([]);
-  const [cargando, setCargando] = useState(true);
+  const citas = useCitasStore((state) => state.citas);
+
+  const cargando = useCitasStore((state) => state.cargando);
+
+  const cargar = useCitasStore((state) => state.cargar);
+  const actualizarEstado = useCitasStore((state) => state.actualizarEstado);
 
   useEffect(() => {
-    api
-      .get("/citas")
-      .then((respuesta) => {
-        setCitas(respuesta.data.data);
-      })
-      .catch((err: unknown) => {
-        toast.error(extraerMensajeError(err));
-      })
-      .finally(() => {
-        setCargando(false);
-      });
-  }, []);
+    cargar().catch((err: unknown) => {
+      toast.error(extraerMensajeError(err));
+    });
+  }, [cargar]);
 
   const cambiarEstado = async (id: number, nuevoEstado: EstadoCita) => {
-    const citasAnteriores = citas;
-
-    setCitas((prev) =>
-      prev.map((cita) =>
-        cita.id_cita === id ? { ...cita, estado: nuevoEstado } : cita,
-      ),
-    );
-
     try {
-      await updateEstado(String(id), nuevoEstado);
+      await actualizarEstado(String(id), nuevoEstado);
 
       toast.success("Estado actualizado");
     } catch (err: unknown) {
-      setCitas(citasAnteriores);
-
-      toast.error("Cambio revertido");
-
-      const mensaje = extraerMensajeError(err);
-
-      if (mensaje) {
-        toast.error(mensaje);
-      }
+      toast.error(extraerMensajeError(err));
     }
   };
 
-  if (cargando) {
+  if (cargando && citas.length === 0) {
     return (
       <main className="min-h-screen bg-slate-100 p-8">
         <p className="text-slate-600">Cargando citas...</p>
@@ -108,7 +79,7 @@ export function PaginaCitas() {
                   <button
                     type="button"
                     onClick={() => cambiarEstado(cita.id_cita, "Completada")}
-                    disabled={cita.estado === "Completada"}
+                    disabled={cita.estado === "Completada" || cargando}
                     className="rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Completar
@@ -117,7 +88,7 @@ export function PaginaCitas() {
                   <button
                     type="button"
                     onClick={() => cambiarEstado(cita.id_cita, "Cancelada")}
-                    disabled={cita.estado === "Cancelada"}
+                    disabled={cita.estado === "Cancelada" || cargando}
                     className="rounded-lg bg-rose-600 px-4 py-2 font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Cancelar
