@@ -1,88 +1,41 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+
 import { MetricCard } from "./components/MetricCard";
 import { StatusBadge } from "./components/StatusBadge";
-import { api } from "./lib/axios";
 import type { Metrica } from "./types";
-
-type EstadoCita = "Programada" | "Cancelada" | "Realizada";
-
-type Cita = {
-  estado: EstadoCita;
-};
+import { usePacientesStore } from "./stores/pacientesStore";
+import { useCitasStore } from "./stores/citasStore";
 
 export function PaginaDashboard() {
   const navigate = useNavigate();
 
-  const [pacientes, setPacientes] = useState(0);
-  const [cargandoPacientes, setCargandoPacientes] = useState(true);
-  const [errorPacientes, setErrorPacientes] = useState(false);
+  const pacientes = usePacientesStore((state) => state.pacientes);
 
-  const [medicos, setMedicos] = useState(0);
-  const [cargandoMedicos, setCargandoMedicos] = useState(true);
-  const [errorMedicos, setErrorMedicos] = useState(false);
+  const cargandoPacientes = usePacientesStore((state) => state.cargando);
 
-  const [citasProgramadas, setCitasProgramadas] = useState(0);
-  const [cargandoCitas, setCargandoCitas] = useState(true);
-  const [errorCitas, setErrorCitas] = useState(false);
+  const errorPacientes = usePacientesStore((state) => state.error);
 
-  const [completadas, setCompletadas] = useState(0);
+  const citas = useCitasStore((state) => state.citas);
 
-  useEffect(() => {
-    api
-      .get("/pacientes")
-      .then((res) => {
-        setPacientes(res.data.data.length);
-      })
-      .catch(() => {
-        setErrorPacientes(true);
-      })
-      .finally(() => {
-        setCargandoPacientes(false);
-      });
-  }, []);
+  const cargandoCitas = useCitasStore((state) => state.cargando);
 
-  useEffect(() => {
-    api
-      .get("/medicos")
-      .then((res) => {
-        setMedicos(res.data.data.length);
-      })
-      .catch(() => {
-        setErrorMedicos(true);
-      })
-      .finally(() => {
-        setCargandoMedicos(false);
-      });
-  }, []);
+  const [mantenimiento, setMantenimiento] = useState(false);
 
-  useEffect(() => {
-    api
-      .get("/citas")
-      .then((res) => {
-        const citas: Cita[] = res.data.data;
+  const citasProgramadas = citas.length;
 
-        const programadas = citas.filter(
-          (cita) => cita.estado === "Programada",
-        );
-
-        const realizadas = citas.filter((cita) => cita.estado === "Realizada");
-
-        setCitasProgramadas(programadas.length);
-        setCompletadas(realizadas.length);
-      })
-      .catch(() => {
-        setErrorCitas(true);
-      })
-      .finally(() => {
-        setCargandoCitas(false);
-      });
-  }, []);
+  const completadas = citas.filter(
+    (cita) => cita.estado === "Completada",
+  ).length;
 
   const metricaPacientes: Metrica = {
     id: "pacientes",
     titulo: "Pacientes",
-    valor: cargandoPacientes ? "..." : errorPacientes ? "Error" : pacientes,
+    valor: cargandoPacientes
+      ? "..."
+      : errorPacientes
+        ? "Error"
+        : pacientes.length,
     descripcion: "Pacientes registrados",
     tendencia: "positiva",
     icono: "👥",
@@ -91,7 +44,7 @@ export function PaginaDashboard() {
   const metricaMedicos: Metrica = {
     id: "medicos",
     titulo: "Médicos",
-    valor: cargandoMedicos ? "..." : errorMedicos ? "Error" : medicos,
+    valor: "No disponible",
     descripcion: "Médicos registrados",
     tendencia: "positiva",
     icono: "👨‍⚕️",
@@ -100,7 +53,7 @@ export function PaginaDashboard() {
   const metricaCitasProgramadas: Metrica = {
     id: "citas-programadas",
     titulo: "Citas Programadas",
-    valor: cargandoCitas ? "..." : errorCitas ? "Error" : citasProgramadas,
+    valor: cargandoCitas ? "..." : citasProgramadas,
     descripcion: "Citas con estado programado",
     tendencia: "positiva",
     icono: "📅",
@@ -109,20 +62,10 @@ export function PaginaDashboard() {
   const metricaCompletadas: Metrica = {
     id: "completadas",
     titulo: "Completadas Hoy",
-    valor: cargandoCitas ? "..." : errorCitas ? "Error" : completadas,
+    valor: cargandoCitas ? "..." : completadas,
     descripcion: "Citas realizadas",
     tendencia: "positiva",
     icono: "✅",
-  };
-
-  const [mantenimiento, setMantenimiento] = useState(false);
-
-  const incrementarPacientes = () => {
-    setPacientes((prev) => prev + 1);
-  };
-
-  const decrementarPacientes = () => {
-    setPacientes((prev) => prev - 1);
   };
 
   return (
@@ -138,8 +81,11 @@ export function PaginaDashboard() {
 
         <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           <MetricCard metrica={metricaPacientes} />
+
           <MetricCard metrica={metricaMedicos} />
+
           <MetricCard metrica={metricaCitasProgramadas} />
+
           <MetricCard metrica={metricaCompletadas} />
         </section>
 
@@ -171,22 +117,6 @@ export function PaginaDashboard() {
               className="rounded-lg bg-slate-200 px-4 py-2 font-medium text-slate-700 hover:bg-slate-300"
             >
               Mantenimiento
-            </button>
-
-            <button
-              type="button"
-              onClick={incrementarPacientes}
-              className="rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white hover:bg-emerald-700"
-            >
-              + Paciente
-            </button>
-
-            <button
-              type="button"
-              onClick={decrementarPacientes}
-              className="rounded-lg bg-rose-600 px-4 py-2 font-medium text-white hover:bg-rose-700"
-            >
-              - Paciente
             </button>
           </div>
 
