@@ -9,6 +9,7 @@ import {
 } from "../services/pacientes";
 import type { CrearPacienteData } from "../services/pacientes";
 import type { Paciente } from "../types/paciente";
+import type { RespuestaPaginada } from "../types/api";
 import { extraerMensajeError } from "../lib/errorHandler";
 
 interface PacientesState {
@@ -41,7 +42,7 @@ export const usePacientesStore = create<PacientesState>()(
         });
 
         try {
-          const res = await api.get("/pacientes", {
+          const res = await api.get<RespuestaPaginada<Paciente>>("/pacientes", {
             params: { query },
           });
 
