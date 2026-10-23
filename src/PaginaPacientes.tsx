@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import { PacienteRow } from "./components/PacienteRow";
 import { BuscadorPacientes } from "./components/BuscadorPacientes";
 import { ModalConfirmacion } from "./components/ModalConfirmacion";
+import { useDebounce } from "./hooks/useDebounce";
 import { extraerMensajeError } from "./lib/errorHandler";
 import { usePacientesStore } from "./stores/pacientesStore";
 import { useFiltrosStore } from "./stores/filtrosStore";
@@ -27,6 +28,8 @@ export function PaginaPacientes() {
   const queryPacientes = useFiltrosStore((state) => state.queryPacientes);
 
   const setQueryPacientes = useFiltrosStore((state) => state.setQueryPacientes);
+
+  const queryDebounced = useDebounce(queryPacientes, 350);
 
   const estadoPacienteFiltro = useFiltrosStore(
     (state) => state.estadoPacienteFiltro,
@@ -55,10 +58,10 @@ export function PaginaPacientes() {
   const [eliminando, setEliminando] = useState(false);
 
   useEffect(() => {
-    cargar(queryPacientes).catch((err: unknown) => {
+    cargar(queryDebounced).catch((err: unknown) => {
       toast.error(extraerMensajeError(err));
     });
-  }, [cargar, queryPacientes]);
+  }, [cargar, queryDebounced]);
 
   const pacientesFiltrados = pacientes.filter((paciente) => {
     const textoBusqueda = queryPacientes.toLowerCase();
@@ -116,6 +119,7 @@ export function PaginaPacientes() {
           <BuscadorPacientes
             value={queryPacientes}
             onChange={setQueryPacientes}
+            cargando={cargando}
           />
         </section>
 
