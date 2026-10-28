@@ -1,18 +1,11 @@
 import { api } from "../lib/axios";
 import type { Paciente } from "../types/paciente";
+import type { CrearPacienteDTO, ActualizarPacienteDTO } from "../types/dtos";
 
-export interface CrearPacienteData {
-  nombre: string;
-  apellido: string;
-  telefono: string;
-  email?: string;
-  fecha_nacimiento: string;
-}
-
-export const create = (data: CrearPacienteData) =>
+export const create = (data: CrearPacienteDTO) =>
   api.post<Paciente>("/pacientes", data);
 
-export const update = (id: string, data: Partial<CrearPacienteData>) =>
+export const update = (id: string, data: ActualizarPacienteDTO) =>
   api.put<Paciente>(`/pacientes/${id}`, data);
 
 export const remove = (id: string) => api.delete(`/pacientes/${id}`);

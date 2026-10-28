@@ -113,6 +113,14 @@ export function PaginaDashboard() {
 
             <button
               type="button"
+              onClick={() => navigate("/reportes")}
+              className="rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white hover:bg-emerald-700"
+            >
+              Ver reportes
+            </button>
+
+            <button
+              type="button"
               onClick={() => setMantenimiento((prev) => !prev)}
               className="rounded-lg bg-slate-200 px-4 py-2 font-medium text-slate-700 hover:bg-slate-300"
             >
