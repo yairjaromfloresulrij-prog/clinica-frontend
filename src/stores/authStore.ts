@@ -1,12 +1,18 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { LoginResponse } from "../services/auth";
+
+interface Usuario {
+  id: number;
+  nombre: string;
+  email: string;
+  rol: string;
+}
 
 interface AuthState {
   token: string | null;
-  usuario: LoginResponse["usuario"] | null;
+  usuario: Usuario | null;
   isAuthenticated: boolean;
-  login: (token: string, usuario: LoginResponse["usuario"]) => void;
+  login: (token: string, usuario: Usuario) => void;
   logout: () => void;
 }
 

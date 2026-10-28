@@ -2,11 +2,17 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
-
+import { jwtDecode } from "jwt-decode";
 import { loginSchema, type LoginFormData } from "./schemas/loginSchema";
 import { login } from "./services/auth";
 import { useAuthStore } from "./stores/authStore";
 import { extraerMensajeError } from "./lib/errorHandler";
+
+interface TokenPayload {
+  id: number;
+  email: string;
+  role: string;
+}
 
 export function PaginaLogin() {
   const navigate = useNavigate();
@@ -25,8 +31,16 @@ export function PaginaLogin() {
     try {
       const respuesta = await login(datos);
 
-      guardarSesion(respuesta.token, respuesta.usuario);
+      const datosToken = jwtDecode<TokenPayload>(respuesta.token);
 
+      const usuario = {
+        id: datosToken.id,
+        nombre: datosToken.email,
+        email: datosToken.email,
+        rol: datosToken.role,
+      };
+
+      guardarSesion(respuesta.token, usuario);
       toast.success("Inicio de sesión exitoso");
 
       navigate("/", { replace: true });
