@@ -3,12 +3,6 @@ import type { LoginFormData } from "../schemas/loginSchema";
 
 export interface LoginResponse {
   token: string;
-  usuario: {
-    id: number;
-    nombre: string;
-    email: string;
-    rol: string;
-  };
 }
 
 export async function login(datos: LoginFormData): Promise<LoginResponse> {
