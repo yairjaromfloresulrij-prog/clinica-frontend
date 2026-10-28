@@ -33,7 +33,18 @@ export function Layout() {
           >
             👥 Pacientes
           </NavLink>
-
+          <NavLink
+            to="/reportes"
+            className={({ isActive }) =>
+              `rounded-lg px-4 py-3 font-medium ${
+                isActive
+                  ? "bg-sky-600 text-white"
+                  : "text-slate-300 hover:bg-slate-800"
+              }`
+            }
+          >
+            📊 Reportes
+          </NavLink>
           <NavLink
             to="/citas/nueva"
             className={({ isActive }) =>

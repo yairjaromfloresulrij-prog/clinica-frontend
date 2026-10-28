@@ -7,7 +7,7 @@ import {
   update as actualizarPaciente,
   remove as eliminarPaciente,
 } from "../services/pacientes";
-import type { CrearPacienteData } from "../services/pacientes";
+import type { CrearPacienteDTO, ActualizarPacienteDTO } from "../types/dtos";
 import type { Paciente } from "../types/paciente";
 import type { RespuestaPaginada } from "../types/api";
 import { extraerMensajeError } from "../lib/errorHandler";
@@ -19,9 +19,9 @@ interface PacientesState {
 
   cargar: (query?: string) => Promise<void>;
 
-  crear: (data: CrearPacienteData) => Promise<void>;
+  crear: (data: CrearPacienteDTO) => Promise<void>;
 
-  actualizar: (id: string, data: Partial<CrearPacienteData>) => Promise<void>;
+  actualizar: (id: string, data: ActualizarPacienteDTO) => Promise<void>;
 
   eliminar: (id: string) => Promise<void>;
 

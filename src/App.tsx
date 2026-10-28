@@ -4,6 +4,7 @@ import { Layout } from "./layouts/Layout";
 import { PaginaDashboard } from "./PaginaDashboard";
 import { PaginaPacientes } from "./PaginaPacientes";
 import { PaginaDetallePaciente } from "./PaginaDetallePaciente";
+import { PaginaReportes } from "./PaginaReportes";
 import { PaginaNotFound } from "./PaginaNotFound";
 import { PaginaCitas } from "./PaginaCitas";
 import FormularioCita from "./FormularioCita";
@@ -21,6 +22,8 @@ function App() {
         <Route path="/citas/nueva" element={<FormularioCita />} />
 
         <Route path="/citas" element={<PaginaCitas />} />
+
+        <Route path="/reportes" element={<PaginaReportes />} />
 
         <Route path="*" element={<PaginaNotFound />} />
       </Route>

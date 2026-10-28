@@ -4,7 +4,8 @@ import { devtools } from "zustand/middleware";
 import { api } from "../lib/axios";
 import { extraerMensajeError } from "../lib/errorHandler";
 import { create as crearCita, updateEstado } from "../services/citas";
-import type { CrearCitaData, EstadoCita } from "../services/citas";
+import type { EstadoCita } from "../services/citas";
+import type { CrearCitaDTO } from "../types/dtos";
 import type { Cita } from "../types/cita";
 
 interface CitasState {
@@ -20,7 +21,7 @@ interface CitasState {
 
   actualizarEstado: (id: string, estado: EstadoCita) => Promise<void>;
 
-  agregarCita: (data: CrearCitaData) => Promise<void>;
+  agregarCita: (data: CrearCitaDTO) => Promise<void>;
 }
 
 export const useCitasStore = create<CitasState>()(
