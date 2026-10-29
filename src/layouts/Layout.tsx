@@ -71,7 +71,9 @@ export function Layout() {
         </nav>
 
         <div className="mt-auto border-t border-slate-700 pt-6">
-          <p className="font-medium">{usuario?.nombre}</p>
+          <NavLink to="/perfil" className="font-medium hover:text-sky-400">
+            {usuario?.nombre}
+          </NavLink>
 
           <p className="mt-1 text-sm text-slate-400">Rol: {usuario?.rol}</p>
 
