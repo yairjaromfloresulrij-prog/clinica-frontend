@@ -10,6 +10,7 @@ import { PaginaCitas } from "./PaginaCitas";
 import { PaginaSinAcceso } from "./PaginaSinAcceso";
 import FormularioCita from "./FormularioCita";
 import { PaginaReportes } from "./PaginaReportes";
+import { PaginaPerfil } from "./PaginaPerfil";
 import { RutaProtegida } from "./components/RutaProtegida";
 
 function App() {
@@ -24,7 +25,7 @@ function App() {
           <Route path="/pacientes/:id" element={<PaginaDetallePaciente />} />
           <Route path="/citas/nueva" element={<FormularioCita />} />
           <Route path="/citas" element={<PaginaCitas />} />
-
+          <Route path="/perfil" element={<PaginaPerfil />} />
           <Route
             element={<RutaProtegida rolesPermitidos={["GERENCIA", "ADMIN"]} />}
           >

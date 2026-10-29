@@ -6,6 +6,8 @@ interface Usuario {
   nombre: string;
   email: string;
   rol: string;
+  telefono?: string;
+  foto?: string;
 }
 
 interface AuthState {
@@ -13,6 +15,7 @@ interface AuthState {
   usuario: Usuario | null;
   isAuthenticated: boolean;
   login: (token: string, usuario: Usuario) => void;
+  actualizarUsuario: (usuario: Usuario) => void;
   logout: () => void;
 }
 
@@ -28,6 +31,11 @@ export const useAuthStore = create<AuthState>()(
           token,
           usuario,
           isAuthenticated: true,
+        }),
+
+      actualizarUsuario: (usuario) =>
+        set({
+          usuario,
         }),
 
       logout: () =>
