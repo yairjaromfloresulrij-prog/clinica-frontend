@@ -1,40 +1,35 @@
 import { useEffect, useState } from "react";
+import { api } from "../lib/axios";
 import type { Medico } from "../types/medico";
-
-const medicosSimulados: Medico[] = [
-  {
-    id: "1",
-    nombre: "Carlos Rodríguez",
-    especialidad: "Cardiología",
-  },
-  {
-    id: "2",
-    nombre: "Laura Martínez",
-    especialidad: "Dermatología",
-  },
-  {
-    id: "3",
-    nombre: "Andrés Gómez",
-    especialidad: "Neurología",
-  },
-  {
-    id: "4",
-    nombre: "Sofía Fernández",
-    especialidad: "Pediatría",
-  },
-];
 
 export function useMedicos() {
   const [medicos, setMedicos] = useState<Medico[]>([]);
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setMedicos(medicosSimulados);
-      setCargando(false);
-    }, 800);
+    const cargarMedicos = async () => {
+      try {
+        const res = await api.get("/medicos");
 
-    return () => clearTimeout(timer);
+        const medicos: Medico[] = res.data.data.map(
+          (medico: {
+            id_medico: number;
+            nombre: string;
+            apellido: string;
+          }) => ({
+            id: String(medico.id_medico),
+            nombre: `${medico.nombre} ${medico.apellido}`,
+            especialidad: "",
+          }),
+        );
+
+        setMedicos(medicos);
+      } finally {
+        setCargando(false);
+      }
+    };
+
+    cargarMedicos();
   }, []);
 
   return {

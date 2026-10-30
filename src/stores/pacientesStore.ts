@@ -42,12 +42,32 @@ export const usePacientesStore = create<PacientesState>()(
         });
 
         try {
-          const res = await api.get<RespuestaPaginada<Paciente>>("/pacientes", {
+          const res = await api.get("/pacientes", {
             params: { query },
           });
 
+          const pacientes: Paciente[] = res.data.data.map(
+            (paciente: {
+              id_paciente: number;
+              nombre: string;
+              apellido: string;
+              email: string;
+              telefono: string;
+              fecha_nacimiento: string;
+            }) => ({
+              id: String(paciente.id_paciente),
+              nombre: paciente.nombre,
+              apellido: paciente.apellido,
+              email: paciente.email,
+              telefono: paciente.telefono,
+              especialidadAsignada: "",
+              ultimaCita: "",
+              estado: "activo",
+            }),
+          );
+
           set({
-            pacientes: res.data.data,
+            pacientes,
             cargando: false,
           });
         } catch (err) {
