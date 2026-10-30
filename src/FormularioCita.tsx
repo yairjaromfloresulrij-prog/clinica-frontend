@@ -1,17 +1,28 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useNavigate } from "react-router-dom";
+import { create } from "./services/citas";
 import { citaSchema, type CitaFormData } from "./schemas/citaSchema";
+
 import { useMedicos } from "./hooks/useMedicos";
+import { usePacientesStore } from "./stores/pacientesStore";
 
 export default function FormularioCita() {
   const { medicos, cargando } = useMedicos();
-  const navigate = useNavigate();
+
+  const {
+    pacientes,
+    cargar: cargarPacientes,
+    cargando: cargandoPacientes,
+  } = usePacientesStore();
 
   const [citaConfirmada, setCitaConfirmada] = useState<CitaFormData | null>(
     null,
   );
+
+  useEffect(() => {
+    cargarPacientes();
+  }, [cargarPacientes]);
 
   const {
     register,
@@ -21,7 +32,7 @@ export default function FormularioCita() {
   } = useForm<CitaFormData>({
     resolver: zodResolver(citaSchema),
     defaultValues: {
-      pacienteNombre: "",
+      pacienteId: "",
       medicoId: "",
       fecha: "",
       hora: "",
@@ -31,7 +42,15 @@ export default function FormularioCita() {
   });
 
   const onSubmit = async (data: CitaFormData) => {
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    alert(`Paciente ID: ${data.pacienteId}`);
+
+    const fechaHora = `${data.fecha}T${data.hora}:00`;
+
+    await create({
+      id_paciente: Number(data.pacienteId),
+      id_medico: Number(data.medicoId),
+      fecha_hora: fechaHora,
+    });
 
     setCitaConfirmada(data);
   };
@@ -42,6 +61,14 @@ export default function FormularioCita() {
   };
 
   if (citaConfirmada) {
+    const pacienteSeleccionado = pacientes.find(
+      (paciente) => paciente.id === citaConfirmada.pacienteId,
+    );
+
+    const medicoSeleccionado = medicos.find(
+      (medico) => medico.id === citaConfirmada.medicoId,
+    );
+
     return (
       <div className="mx-auto max-w-2xl rounded-lg border border-emerald-200 bg-emerald-50 p-6">
         <h2 className="mb-4 text-2xl font-bold text-emerald-800">
@@ -50,15 +77,14 @@ export default function FormularioCita() {
 
         <div className="space-y-2 text-gray-700">
           <p>
-            <strong>Paciente:</strong> {citaConfirmada.pacienteNombre}
+            <strong>Paciente:</strong>{" "}
+            {pacienteSeleccionado
+              ? `${pacienteSeleccionado.nombre} ${pacienteSeleccionado.apellido}`
+              : "Paciente no encontrado"}
           </p>
 
           <p>
-            <strong>Médico:</strong>{" "}
-            {
-              medicos.find((medico) => medico.id === citaConfirmada.medicoId)
-                ?.nombre
-            }
+            <strong>Médico:</strong> {medicoSeleccionado?.nombre}
           </p>
 
           <p>
@@ -95,162 +121,116 @@ export default function FormularioCita() {
       className="mx-auto max-w-2xl space-y-6 rounded-lg border bg-white p-6 shadow"
     >
       <div>
-        <h1 className="text-2xl font-bold text-gray-800">Nueva cita</h1>
+        <h1 className="text-2xl font-bold">Agendar nueva cita</h1>
 
-        <p className="mt-1 text-sm text-gray-500">
-          Completa los datos para agendar una nueva cita.
-        </p>
+        <p className="text-gray-500">Completa los datos de la cita.</p>
       </div>
 
       {/* Paciente */}
-
       <div>
-        <label
-          htmlFor="pacienteNombre"
-          className="mb-1 block font-medium text-gray-700"
+        <label className="mb-1 block font-medium">Paciente</label>
+
+        <select
+          {...register("pacienteId")}
+          disabled={cargandoPacientes}
+          className="w-full rounded-md border px-3 py-2"
         >
-          Nombre del paciente
-        </label>
+          <option value="">
+            {cargandoPacientes
+              ? "Cargando pacientes..."
+              : "Seleccionar paciente"}
+          </option>
 
-        <input
-          id="pacienteNombre"
-          type="text"
-          {...register("pacienteNombre")}
-          className={`w-full rounded-md border px-3 py-2 ${
-            errors.pacienteNombre ? "border-red-500" : "border-gray-300"
-          }`}
-          placeholder="Nombre completo"
-        />
+          {pacientes.map((paciente) => (
+            <option key={paciente.id} value={paciente.id}>
+              {paciente.nombre} {paciente.apellido}
+            </option>
+          ))}
+        </select>
 
-        {errors.pacienteNombre && (
-          <p className="mt-1 text-sm text-red-600">
-            {errors.pacienteNombre.message}
-          </p>
+        {errors.pacienteId && (
+          <p className="text-sm text-red-600">{errors.pacienteId.message}</p>
         )}
       </div>
 
       {/* Médico */}
-
       <div>
-        <label
-          htmlFor="medicoId"
-          className="mb-1 block font-medium text-gray-700"
-        >
-          Médico
-        </label>
+        <label className="mb-1 block font-medium">Médico</label>
 
         <select
-          id="medicoId"
           {...register("medicoId")}
           disabled={cargando}
-          className={`w-full rounded-md border px-3 py-2 ${
-            errors.medicoId ? "border-red-500" : "border-gray-300"
-          }`}
+          className="w-full rounded-md border px-3 py-2"
         >
-          {cargando ? (
-            <option disabled>Cargando médicos...</option>
-          ) : (
-            <>
-              <option value="">Selecciona un médico</option>
+          <option value="">
+            {cargando ? "Cargando médicos..." : "Seleccionar médico"}
+          </option>
 
-              {medicos.map((medico) => (
-                <option key={medico.id} value={medico.id}>
-                  {medico.nombre} - {medico.especialidad}
-                </option>
-              ))}
-            </>
-          )}
+          {medicos.map((medico) => (
+            <option key={medico.id} value={medico.id}>
+              {medico.nombre}
+            </option>
+          ))}
         </select>
 
         {errors.medicoId && (
-          <p className="mt-1 text-sm text-red-600">{errors.medicoId.message}</p>
+          <p className="text-sm text-red-600">{errors.medicoId.message}</p>
         )}
       </div>
 
       {/* Fecha */}
-
       <div>
-        <label htmlFor="fecha" className="mb-1 block font-medium text-gray-700">
-          Fecha
-        </label>
+        <label className="mb-1 block font-medium">Fecha</label>
 
         <input
-          id="fecha"
           type="date"
-          min={new Date().toISOString().split("T")[0]}
           {...register("fecha")}
-          className={`w-full rounded-md border px-3 py-2 ${
-            errors.fecha ? "border-red-500" : "border-gray-300"
-          }`}
+          className="w-full rounded-md border px-3 py-2"
         />
 
         {errors.fecha && (
-          <p className="mt-1 text-sm text-red-600">{errors.fecha.message}</p>
+          <p className="text-sm text-red-600">{errors.fecha.message}</p>
         )}
       </div>
 
       {/* Hora */}
-
       <div>
-        <label htmlFor="hora" className="mb-1 block font-medium text-gray-700">
-          Hora
-        </label>
+        <label className="mb-1 block font-medium">Hora</label>
 
         <input
-          id="hora"
           type="time"
           {...register("hora")}
-          className={`w-full rounded-md border px-3 py-2 ${
-            errors.hora ? "border-red-500" : "border-gray-300"
-          }`}
+          className="w-full rounded-md border px-3 py-2"
         />
 
         {errors.hora && (
-          <p className="mt-1 text-sm text-red-600">{errors.hora.message}</p>
+          <p className="text-sm text-red-600">{errors.hora.message}</p>
         )}
       </div>
 
       {/* Motivo */}
-
       <div>
-        <label
-          htmlFor="motivo"
-          className="mb-1 block font-medium text-gray-700"
-        >
-          Motivo de la consulta
-        </label>
+        <label className="mb-1 block font-medium">Motivo</label>
 
         <textarea
-          id="motivo"
-          rows={4}
           {...register("motivo")}
-          className={`w-full rounded-md border px-3 py-2 ${
-            errors.motivo ? "border-red-500" : "border-gray-300"
-          }`}
+          rows={4}
+          className="w-full rounded-md border px-3 py-2"
           placeholder="Describe el motivo de la consulta..."
         />
 
         {errors.motivo && (
-          <p className="mt-1 text-sm text-red-600">{errors.motivo.message}</p>
+          <p className="text-sm text-red-600">{errors.motivo.message}</p>
         )}
       </div>
 
       {/* Urgencia */}
-
       <div>
-        <label
-          htmlFor="urgencia"
-          className="mb-1 block font-medium text-gray-700"
-        >
-          Urgencia
-        </label>
+        <label className="mb-1 block font-medium">Urgencia</label>
 
         <select
-          id="urgencia"
           {...register("urgencia")}
-          className={`w-full rounded-md border px-3 py-2 ${
-            errors.urgencia ? "border-red-500" : "border-gray-300"
-          }`}
+          className="w-full rounded-md border px-3 py-2"
         >
           <option value="baja">Baja</option>
           <option value="media">Media</option>
@@ -259,27 +239,20 @@ export default function FormularioCita() {
         </select>
 
         {errors.urgencia && (
-          <p className="mt-1 text-sm text-red-600">{errors.urgencia.message}</p>
+          <p className="text-sm text-red-600">{errors.urgencia.message}</p>
         )}
       </div>
 
-      <div className="flex gap-3">
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className="rounded-md bg-slate-200 px-4 py-3 font-medium text-slate-800 hover:bg-slate-300"
-        >
-          Cancelar
-        </button>
-
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="flex-1 rounded-md bg-blue-600 px-4 py-3 font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {isSubmitting ? "Agendando..." : "Agendar cita"}
-        </button>
-      </div>
+      <button
+        type="submit"
+        disabled={isSubmitting}
+        className="w-full rounded-md bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+      >
+        {isSubmitting ? "Agendando..." : "Agendar cita"}
+      </button>
+      {Object.keys(errors).length > 0 && (
+        <p className="text-red-600">Hay errores en el formulario</p>
+      )}
     </form>
   );
 }

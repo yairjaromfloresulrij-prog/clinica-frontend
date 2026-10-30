@@ -68,6 +68,18 @@ export function Layout() {
           >
             📅 Nueva cita
           </NavLink>
+          <NavLink
+            to="/historial"
+            className={({ isActive }) =>
+              `rounded-lg px-4 py-3 font-medium ${
+                isActive
+                  ? "bg-sky-600 text-white"
+                  : "text-slate-300 hover:bg-slate-800"
+              }`
+            }
+          >
+            📋 Historial de Citas
+          </NavLink>
         </nav>
 
         <div className="mt-auto border-t border-slate-700 pt-6">
