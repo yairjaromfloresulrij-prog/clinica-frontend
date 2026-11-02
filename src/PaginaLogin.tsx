@@ -7,7 +7,7 @@ import { loginSchema, type LoginFormData } from "./schemas/loginSchema";
 import { login } from "./services/auth";
 import { useAuthStore } from "./stores/authStore";
 import { extraerMensajeError } from "./lib/errorHandler";
-
+import { Spinner } from "./shared/components/ui/Spinner";
 interface TokenPayload {
   id: number;
   email: string;
@@ -59,7 +59,7 @@ export function PaginaLogin() {
 
           <p className="mt-2 text-slate-600">Inicia sesión para continuar</p>
         </div>
-
+        {isSubmitting && <Spinner />}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           <div>
             <label

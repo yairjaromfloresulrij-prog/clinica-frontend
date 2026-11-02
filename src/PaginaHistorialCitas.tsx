@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { getHistorial } from "./services/citas";
+import { SkeletonCitaRow } from "./shared/components/ui/SkeletonCitaRow";
+import { EstadoVacio } from "./shared/components/ui/EstadoVacio";
 import type { EstadoCita } from "./services/citas";
 import type { Cita } from "./types/cita";
 
@@ -30,8 +32,15 @@ export function PaginaHistorialCitas() {
         setTotal(respuesta.data.total);
         setTotalPaginas(respuesta.data.totalPaginas);
       })
+      .catch((error: unknown) => {
+        if (!controller.signal.aborted) {
+          console.error("Error al cargar el historial:", error);
+        }
+      })
       .finally(() => {
-        setCargando(false);
+        if (!controller.signal.aborted) {
+          setCargando(false);
+        }
       });
 
     return () => controller.abort();
@@ -76,12 +85,14 @@ export function PaginaHistorialCitas() {
         {cargando ? (
           <div className="space-y-3">
             {Array.from({ length: 10 }).map((_, indice) => (
-              <div
-                key={indice}
-                className="h-12 animate-pulse rounded bg-gray-200"
-              />
+              <SkeletonCitaRow key={indice} />
             ))}
           </div>
+        ) : citas.length === 0 ? (
+          <EstadoVacio
+            titulo="No hay citas registradas"
+            descripcion="Todavía no hay citas para mostrar con el estado seleccionado."
+          />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">

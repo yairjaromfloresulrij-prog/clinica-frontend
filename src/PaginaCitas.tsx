@@ -1,17 +1,21 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
 import { extraerMensajeError } from "./lib/errorHandler";
 import { useCitasStore } from "./stores/citasStore";
 import type { EstadoCita } from "./services/citas";
+import { SkeletonCitaRow } from "./shared/components/ui/SkeletonCitaRow";
+import { ModalConfirmacion } from "./shared/components/ui/ModalConfirmacion";
 
 export function PaginaCitas() {
   const citas = useCitasStore((state) => state.citas);
-
   const cargando = useCitasStore((state) => state.cargando);
 
   const cargar = useCitasStore((state) => state.cargar);
   const actualizarEstado = useCitasStore((state) => state.actualizarEstado);
+
+  const [citaAConfirmar, setCitaAConfirmar] = useState<number | null>(null);
+  const [confirmandoCancelacion, setConfirmandoCancelacion] = useState(false);
 
   useEffect(() => {
     cargar().catch((err: unknown) => {
@@ -24,15 +28,47 @@ export function PaginaCitas() {
       await actualizarEstado(String(id), nuevoEstado);
 
       toast.success("Estado actualizado");
+      return true;
     } catch (err: unknown) {
       toast.error(extraerMensajeError(err));
+      return false;
+    }
+  };
+
+  const confirmarCancelacion = async () => {
+    if (citaAConfirmar === null) return;
+
+    setConfirmandoCancelacion(true);
+
+    try {
+      const actualizado = await cambiarEstado(citaAConfirmar, "Cancelada");
+
+      if (actualizado) {
+        setCitaAConfirmar(null);
+      }
+    } finally {
+      setConfirmandoCancelacion(false);
     }
   };
 
   if (cargando && citas.length === 0) {
     return (
-      <main className="min-h-screen bg-slate-100 p-8">
-        <p className="text-slate-600">Cargando citas...</p>
+      <main className="min-h-screen bg-slate-100 p-4 sm:p-6 lg:p-8">
+        <div className="mx-auto max-w-6xl">
+          <header className="mb-8">
+            <h1 className="text-3xl font-bold text-slate-900">Citas</h1>
+
+            <p className="mt-2 text-slate-600">
+              Gestión de estados de las citas
+            </p>
+          </header>
+
+          <section className="space-y-4">
+            {Array.from({ length: 5 }).map((_, index) => (
+              <SkeletonCitaRow key={index} />
+            ))}
+          </section>
+        </div>
       </main>
     );
   }
@@ -87,8 +123,12 @@ export function PaginaCitas() {
 
                   <button
                     type="button"
-                    onClick={() => cambiarEstado(cita.id_cita, "Cancelada")}
-                    disabled={cita.estado === "Cancelada" || cargando}
+                    onClick={() => setCitaAConfirmar(cita.id_cita)}
+                    disabled={
+                      cita.estado === "Cancelada" ||
+                      cargando ||
+                      confirmandoCancelacion
+                    }
                     className="rounded-lg bg-rose-600 px-4 py-2 font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Cancelar
@@ -98,6 +138,17 @@ export function PaginaCitas() {
             </article>
           ))}
         </section>
+
+        <ModalConfirmacion
+          abierto={citaAConfirmar !== null}
+          titulo="Cancelar cita"
+          mensaje={`¿Estás seguro de que querés cancelar la cita #${citaAConfirmar}?`}
+          textoConfirmar="Sí, cancelar cita"
+          textoCancelar="Volver"
+          cargando={confirmandoCancelacion}
+          onConfirmar={confirmarCancelacion}
+          onCancelar={() => setCitaAConfirmar(null)}
+        />
       </div>
     </main>
   );
