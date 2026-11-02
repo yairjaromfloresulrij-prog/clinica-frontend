@@ -8,7 +8,7 @@ import { InputFotoPerfil } from "./components/InputFotoPerfil";
 import { perfilSchema, type PerfilFormData } from "./schemas/perfilSchema";
 import { api } from "./lib/axios";
 import { extraerMensajeError } from "./lib/errorHandler";
-
+import { Spinner } from "./shared/components/ui/Spinner";
 export function PaginaPerfil() {
   const { usuario, actualizarUsuario } = useAuthStore();
 
@@ -67,7 +67,7 @@ export function PaginaPerfil() {
         <p className="mt-2 text-slate-600">
           Actualizá tus datos personales y foto de perfil.
         </p>
-
+        {isSubmitting && <Spinner />}
         <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-6">
           <InputFotoPerfil fotoActual={usuario?.foto} onChange={setFoto} />
 

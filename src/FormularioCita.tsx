@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { create } from "./services/citas";
 import { citaSchema, type CitaFormData } from "./schemas/citaSchema";
-
+import { Spinner } from "./shared/components/ui/Spinner";
 import { useMedicos } from "./hooks/useMedicos";
 import { usePacientesStore } from "./stores/pacientesStore";
 
@@ -40,7 +40,21 @@ export default function FormularioCita() {
       urgencia: "media",
     },
   });
+  if (cargando || cargandoPacientes) {
+    return (
+      <main className="min-h-screen bg-slate-100 p-4 sm:p-6 lg:p-8">
+        <div className="mx-auto max-w-2xl rounded-lg border bg-white p-6 shadow">
+          <h1 className="mb-4 text-2xl font-bold">Agendar nueva cita</h1>
 
+          <Spinner />
+
+          <p className="text-center text-gray-500">
+            Cargando pacientes y médicos...
+          </p>
+        </div>
+      </main>
+    );
+  }
   const onSubmit = async (data: CitaFormData) => {
     alert(`Paciente ID: ${data.pacienteId}`);
 

@@ -9,7 +9,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-
+import { AlertaBanner } from "./shared/components/ui/AlertaBanner";
 import { useApi } from "./hooks/useApi";
 
 interface ReporteEspecialidad {
@@ -65,10 +65,15 @@ export function PaginaReportes() {
 
   if (errorEspecialidades || errorCitas) {
     return (
-      <div>
+      <div className="space-y-4">
         <h1 className="text-3xl font-bold text-slate-900">Reportes</h1>
 
-        <p className="mt-4 text-red-600">{errorEspecialidades ?? errorCitas}</p>
+        <AlertaBanner
+          tipo="error"
+          mensaje={
+            errorEspecialidades ?? errorCitas ?? "Error al cargar reportes"
+          }
+        />
       </div>
     );
   }

@@ -13,7 +13,8 @@ import { PaginaReportes } from "./PaginaReportes";
 import { PaginaPerfil } from "./PaginaPerfil";
 import { PaginaHistorialCitas } from "./PaginaHistorialCitas";
 import { RutaProtegida } from "./components/RutaProtegida";
-
+import { ErrorBoundary } from "./shared/components/ui/ErrorBoundary";
+import { AlertaBanner } from "./shared/components/ui/AlertaBanner";
 function App() {
   return (
     <Routes>
@@ -21,17 +22,86 @@ function App() {
       <Route path="/sin-acceso" element={<PaginaSinAcceso />} />
       <Route element={<RutaProtegida />}>
         <Route element={<Layout />}>
-          <Route path="/" element={<PaginaDashboard />} />
-          <Route path="/pacientes" element={<PaginaPacientes />} />
-          <Route path="/pacientes/:id" element={<PaginaDetallePaciente />} />
-          <Route path="/citas/nueva" element={<FormularioCita />} />
-          <Route path="/citas" element={<PaginaCitas />} />
-          <Route path="/perfil" element={<PaginaPerfil />} />
-          <Route path="/historial" element={<PaginaHistorialCitas />} />
+          <Route
+            path="/"
+            element={
+              <ErrorBoundary>
+                <PaginaDashboard />
+              </ErrorBoundary>
+            }
+          />
+
+          <Route
+            path="/pacientes"
+            element={
+              <ErrorBoundary>
+                <PaginaPacientes />
+              </ErrorBoundary>
+            }
+          />
+
+          <Route
+            path="/pacientes/:id"
+            element={
+              <ErrorBoundary>
+                <PaginaDetallePaciente />
+              </ErrorBoundary>
+            }
+          />
+
+          <Route
+            path="/citas/nueva"
+            element={
+              <ErrorBoundary>
+                <FormularioCita />
+              </ErrorBoundary>
+            }
+          />
+
+          <Route
+            path="/citas"
+            element={
+              <ErrorBoundary>
+                <PaginaCitas />
+              </ErrorBoundary>
+            }
+          />
+
+          <Route
+            path="/perfil"
+            element={
+              <ErrorBoundary>
+                <PaginaPerfil />
+              </ErrorBoundary>
+            }
+          />
+
+          <Route
+            path="/historial"
+            element={
+              <ErrorBoundary>
+                <PaginaHistorialCitas />
+              </ErrorBoundary>
+            }
+          />
           <Route
             element={<RutaProtegida rolesPermitidos={["GERENCIA", "ADMIN"]} />}
           >
-            <Route path="/reportes" element={<PaginaReportes />} />
+            <Route
+              path="/reportes"
+              element={
+                <ErrorBoundary
+                  fallback={
+                    <AlertaBanner
+                      tipo="error"
+                      mensaje="Error al cargar reportes"
+                    />
+                  }
+                >
+                  <PaginaReportes />
+                </ErrorBoundary>
+              }
+            />
           </Route>
 
           <Route path="*" element={<PaginaNotFound />} />

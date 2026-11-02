@@ -9,7 +9,6 @@ import {
 } from "../services/pacientes";
 import type { CrearPacienteDTO, ActualizarPacienteDTO } from "../types/dtos";
 import type { Paciente } from "../types/paciente";
-import type { RespuestaPaginada } from "../types/api";
 import { extraerMensajeError } from "../lib/errorHandler";
 
 interface PacientesState {

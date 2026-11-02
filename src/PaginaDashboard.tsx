@@ -3,6 +3,9 @@ import { useNavigate } from "react-router-dom";
 
 import { MetricCard } from "./components/MetricCard";
 import { StatusBadge } from "./components/StatusBadge";
+import { SkeletonMetricCard } from "./shared/components/ui/SkeletonMetricCard";
+import { Spinner } from "./shared/components/ui/Spinner";
+import { AlertaBanner } from "./shared/components/ui/AlertaBanner";
 import type { Metrica } from "./types";
 import { usePacientesStore } from "./stores/pacientesStore";
 import { useCitasStore } from "./stores/citasStore";
@@ -11,13 +14,10 @@ export function PaginaDashboard() {
   const navigate = useNavigate();
 
   const pacientes = usePacientesStore((state) => state.pacientes);
-
   const cargandoPacientes = usePacientesStore((state) => state.cargando);
-
   const errorPacientes = usePacientesStore((state) => state.error);
 
   const citas = useCitasStore((state) => state.citas);
-
   const cargandoCitas = useCitasStore((state) => state.cargando);
 
   const [mantenimiento, setMantenimiento] = useState(false);
@@ -31,11 +31,7 @@ export function PaginaDashboard() {
   const metricaPacientes: Metrica = {
     id: "pacientes",
     titulo: "Pacientes",
-    valor: cargandoPacientes
-      ? "..."
-      : errorPacientes
-        ? "Error"
-        : pacientes.length,
+    valor: errorPacientes ? "Error" : pacientes.length,
     descripcion: "Pacientes registrados",
     tendencia: "positiva",
     icono: "👥",
@@ -53,7 +49,7 @@ export function PaginaDashboard() {
   const metricaCitasProgramadas: Metrica = {
     id: "citas-programadas",
     titulo: "Citas Programadas",
-    valor: cargandoCitas ? "..." : citasProgramadas,
+    valor: citasProgramadas,
     descripcion: "Citas con estado programado",
     tendencia: "positiva",
     icono: "📅",
@@ -62,7 +58,7 @@ export function PaginaDashboard() {
   const metricaCompletadas: Metrica = {
     id: "completadas",
     titulo: "Completadas Hoy",
-    valor: cargandoCitas ? "..." : completadas,
+    valor: completadas,
     descripcion: "Citas realizadas",
     tendencia: "positiva",
     icono: "✅",
@@ -78,15 +74,42 @@ export function PaginaDashboard() {
 
           <p className="mt-2 text-slate-600">Resumen general de la clínica</p>
         </header>
+        <header className="mb-8">
+          <h1 className="text-3xl font-bold text-slate-900">
+            Dashboard de Clínica
+          </h1>
 
+          <p className="mt-2 text-slate-600">Resumen general de la clínica</p>
+        </header>
+        {errorPacientes && (
+          <AlertaBanner
+            tipo="error"
+            mensaje={`Error al cargar pacientes: ${errorPacientes}`}
+          />
+        )}
+        {cargandoPacientes && cargandoCitas && <Spinner />}
+
+        <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4"></section>
         <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          <MetricCard metrica={metricaPacientes} />
+          {cargandoPacientes ? (
+            <SkeletonMetricCard />
+          ) : (
+            <MetricCard metrica={metricaPacientes} />
+          )}
 
           <MetricCard metrica={metricaMedicos} />
 
-          <MetricCard metrica={metricaCitasProgramadas} />
-
-          <MetricCard metrica={metricaCompletadas} />
+          {cargandoCitas ? (
+            <>
+              <SkeletonMetricCard />
+              <SkeletonMetricCard />
+            </>
+          ) : (
+            <>
+              <MetricCard metrica={metricaCitasProgramadas} />
+              <MetricCard metrica={metricaCompletadas} />
+            </>
+          )}
         </section>
 
         <section className="mt-8 rounded-xl bg-white p-6 shadow-sm">

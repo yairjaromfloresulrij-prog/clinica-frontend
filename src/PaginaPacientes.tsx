@@ -3,26 +3,26 @@ import toast from "react-hot-toast";
 
 import { PacienteRow } from "./components/PacienteRow";
 import { BuscadorPacientes } from "./components/BuscadorPacientes";
-import { ModalConfirmacion } from "./components/ModalConfirmacion";
+import { ModalConfirmacion } from "./shared/components/ui/ModalConfirmacion";
+
+import { SkeletonPacienteRow } from "./shared/components/ui/SkeletonPacienteRow";
+import { EstadoVacio } from "./shared/components/ui/EstadoVacio";
 import { useDebounce } from "./hooks/useDebounce";
 import { extraerMensajeError } from "./lib/errorHandler";
+import { AlertaBanner } from "./shared/components/ui/AlertaBanner";
 import { usePacientesStore } from "./stores/pacientesStore";
 import { useFiltrosStore } from "./stores/filtrosStore";
+
 import type { EstadoPaciente } from "./types/paciente";
 
 export function PaginaPacientes() {
   const pacientes = usePacientesStore((state) => state.pacientes);
-
   const cargando = usePacientesStore((state) => state.cargando);
-
   const errorStore = usePacientesStore((state) => state.error);
 
   const cargar = usePacientesStore((state) => state.cargar);
-
   const crear = usePacientesStore((state) => state.crear);
-
   const eliminar = usePacientesStore((state) => state.eliminar);
-
   const cambiarEstadoStore = usePacientesStore((state) => state.cambiarEstado);
 
   const queryPacientes = useFiltrosStore((state) => state.queryPacientes);
@@ -38,15 +38,10 @@ export function PaginaPacientes() {
   const setEstadoPaciente = useFiltrosStore((state) => state.setEstadoPaciente);
 
   const [nombre, setNombre] = useState("");
-
   const [apellido, setApellido] = useState("");
-
   const [email, setEmail] = useState("");
-
   const [telefono, setTelefono] = useState("");
-
   const [fechaNacimiento, setFechaNacimiento] = useState("");
-
   const [estado, setEstado] = useState<EstadoPaciente>("activo");
 
   const [error, setError] = useState("");
@@ -285,17 +280,18 @@ export function PaginaPacientes() {
                 className="w-full rounded-lg border px-3 py-2"
               >
                 <option value="activo">Activo</option>
-
                 <option value="inactivo">Inactivo</option>
-
                 <option value="en_espera">En espera</option>
               </select>
             </div>
 
             {(error || errorStore) && (
-              <p className="md:col-span-2 text-sm text-red-600">
-                {error || errorStore}
-              </p>
+              <div className="md:col-span-2">
+                <AlertaBanner
+                  tipo="error"
+                  mensaje={error || errorStore || "Ocurrió un error inesperado"}
+                />
+              </div>
             )}
 
             <div className="md:col-span-2">
@@ -310,12 +306,18 @@ export function PaginaPacientes() {
           </form>
         </section>
 
+        {/* Lista de pacientes */}
         {cargando && pacientes.length === 0 ? (
-          <p className="text-slate-600">Cargando pacientes...</p>
+          <section className="space-y-3">
+            {Array.from({ length: 5 }).map((_, index) => (
+              <SkeletonPacienteRow key={index} />
+            ))}
+          </section>
         ) : pacientesFiltrados.length === 0 ? (
-          <p className="text-slate-600">
-            No hay pacientes que coincidan con los filtros.
-          </p>
+          <EstadoVacio
+            titulo="No hay pacientes registrados"
+            descripcion="Todavía no hay pacientes que coincidan con tu búsqueda o filtros."
+          />
         ) : (
           <section className="space-y-3">
             {pacientesFiltrados.map((paciente) => (
