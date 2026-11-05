@@ -7,20 +7,20 @@ import { SkeletonMetricCard } from "./shared/components/ui/SkeletonMetricCard";
 import { Spinner } from "./shared/components/ui/Spinner";
 import { AlertaBanner } from "./shared/components/ui/AlertaBanner";
 import type { Metrica } from "./types";
-import { usePacientesStore } from "./stores/pacientesStore";
-import { useCitasStore } from "./stores/citasStore";
+import { usePacientes } from "./hooks/usePacientes";
+import { useCitas } from "./hooks/useCitas";
 
 export function PaginaDashboard() {
   const navigate = useNavigate();
 
-  const pacientes = usePacientesStore((state) => state.pacientes);
-  const cargarPacientes = usePacientesStore((state) => state.cargar);
-  const cargandoPacientes = usePacientesStore((state) => state.cargando);
-  const errorPacientes = usePacientesStore((state) => state.error);
+  const {
+    pacientes,
+    cargar: cargarPacientes,
+    cargando: cargandoPacientes,
+    error: errorPacientes,
+  } = usePacientes();
 
-  const citas = useCitasStore((state) => state.citas);
-  const cargarCitas = useCitasStore((state) => state.cargar);
-  const cargandoCitas = useCitasStore((state) => state.cargando);
+  const { citas, cargar: cargarCitas, cargando: cargandoCitas } = useCitas();
 
   const [mantenimiento, setMantenimiento] = useState(false);
 
@@ -44,7 +44,7 @@ export function PaginaDashboard() {
     };
   }, [pacientes, citas]);
 
-  // Actualizar los datos de ambos stores
+  // Actualizar los datos de ambos hooks
   const actualizarDatos = useCallback(async () => {
     await Promise.all([cargarPacientes(), cargarCitas()]);
   }, [cargarPacientes, cargarCitas]);

@@ -1,32 +1,21 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import toast from "react-hot-toast";
 
 import { PacienteRow } from "./components/PacienteRow";
 import { BuscadorPacientes } from "./components/BuscadorPacientes";
 import { ModalConfirmacion } from "./shared/components/ui/ModalConfirmacion";
-
 import { SkeletonPacienteRow } from "./shared/components/ui/SkeletonPacienteRow";
 import { EstadoVacio } from "./shared/components/ui/EstadoVacio";
 import { useDebounce } from "./hooks/useDebounce";
 import { extraerMensajeError } from "./lib/errorHandler";
 import { AlertaBanner } from "./shared/components/ui/AlertaBanner";
-import { usePacientesStore } from "./stores/pacientesStore";
+import { usePacientes } from "./hooks/usePacientes";
 import { useFiltrosStore } from "./stores/filtrosStore";
 
 import type { EstadoPaciente } from "./types/paciente";
 
 export function PaginaPacientes() {
-  const pacientes = usePacientesStore((state) => state.pacientes);
-  const cargando = usePacientesStore((state) => state.cargando);
-  const errorStore = usePacientesStore((state) => state.error);
-
-  const cargar = usePacientesStore((state) => state.cargar);
-  const crear = usePacientesStore((state) => state.crear);
-  const eliminar = usePacientesStore((state) => state.eliminar);
-  const cambiarEstadoStore = usePacientesStore((state) => state.cambiarEstado);
-
   const queryPacientes = useFiltrosStore((state) => state.queryPacientes);
-
   const setQueryPacientes = useFiltrosStore((state) => state.setQueryPacientes);
 
   const queryDebounced = useDebounce(queryPacientes, 350);
@@ -36,6 +25,15 @@ export function PaginaPacientes() {
   );
 
   const setEstadoPaciente = useFiltrosStore((state) => state.setEstadoPaciente);
+
+  const {
+    pacientes,
+    cargando,
+    error: errorStore,
+    crear,
+    eliminar,
+    cambiarEstado: cambiarEstadoStore,
+  } = usePacientes(queryDebounced);
 
   const [nombre, setNombre] = useState("");
   const [apellido, setApellido] = useState("");
@@ -51,12 +49,6 @@ export function PaginaPacientes() {
   );
 
   const [eliminando, setEliminando] = useState(false);
-
-  useEffect(() => {
-    cargar(queryDebounced).catch((err: unknown) => {
-      toast.error(extraerMensajeError(err));
-    });
-  }, [cargar, queryDebounced]);
 
   const pacientesFiltrados = pacientes.filter((paciente) => {
     const textoBusqueda = queryPacientes.toLowerCase();

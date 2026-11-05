@@ -1,27 +1,17 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import toast from "react-hot-toast";
 
 import { extraerMensajeError } from "./lib/errorHandler";
-import { useCitasStore } from "./stores/citasStore";
+import { useCitas } from "./hooks/useCitas";
 import type { EstadoCita } from "./services/citas";
 import { SkeletonCitaRow } from "./shared/components/ui/SkeletonCitaRow";
 import { ModalConfirmacion } from "./shared/components/ui/ModalConfirmacion";
 
 export function PaginaCitas() {
-  const citas = useCitasStore((state) => state.citas);
-  const cargando = useCitasStore((state) => state.cargando);
-
-  const cargar = useCitasStore((state) => state.cargar);
-  const actualizarEstado = useCitasStore((state) => state.actualizarEstado);
+  const { citas, cargando, actualizarEstado } = useCitas();
 
   const [citaAConfirmar, setCitaAConfirmar] = useState<number | null>(null);
   const [confirmandoCancelacion, setConfirmandoCancelacion] = useState(false);
-
-  useEffect(() => {
-    cargar().catch((err: unknown) => {
-      toast.error(extraerMensajeError(err));
-    });
-  }, [cargar]);
 
   const cambiarEstado = async (id: number, nuevoEstado: EstadoCita) => {
     try {
