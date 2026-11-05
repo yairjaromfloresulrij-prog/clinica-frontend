@@ -1,28 +1,21 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+
 import { create } from "./services/citas";
 import { citaSchema, type CitaFormData } from "./schemas/citaSchema";
 import { Spinner } from "./shared/components/ui/Spinner";
 import { useMedicos } from "./hooks/useMedicos";
-import { usePacientesStore } from "./stores/pacientesStore";
+import { usePacientes } from "./hooks/usePacientes";
 
 export default function FormularioCita() {
   const { medicos, cargando } = useMedicos();
 
-  const {
-    pacientes,
-    cargar: cargarPacientes,
-    cargando: cargandoPacientes,
-  } = usePacientesStore();
+  const { pacientes, cargando: cargandoPacientes } = usePacientes();
 
   const [citaConfirmada, setCitaConfirmada] = useState<CitaFormData | null>(
     null,
   );
-
-  useEffect(() => {
-    cargarPacientes();
-  }, [cargarPacientes]);
 
   const {
     register,
@@ -40,6 +33,7 @@ export default function FormularioCita() {
       urgencia: "media",
     },
   });
+
   if (cargando || cargandoPacientes) {
     return (
       <main className="min-h-screen bg-slate-100 p-4 sm:p-6 lg:p-8">
@@ -55,6 +49,7 @@ export default function FormularioCita() {
       </main>
     );
   }
+
   const onSubmit = async (data: CitaFormData) => {
     alert(`Paciente ID: ${data.pacienteId}`);
 
@@ -264,6 +259,7 @@ export default function FormularioCita() {
       >
         {isSubmitting ? "Agendando..." : "Agendar cita"}
       </button>
+
       {Object.keys(errors).length > 0 && (
         <p className="text-red-600">Hay errores en el formulario</p>
       )}
